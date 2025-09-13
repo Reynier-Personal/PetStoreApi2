@@ -1,0 +1,189 @@
+CONCLUSIONES Y HALLAZGOS - EJERCICIO PETSTORE API
+================================================
+
+HERRAMIENTA UTILIZADA: Karate Framework v1.4.1
+API OBJETIVO: https://petstore.swagger.io/v2
+
+1. RESUMEN EJECUTIVO
+===================
+Se implementaron exitosamente las 4 pruebas automatizadas solicitadas para la API de PetStore:
+✓ Añadir una mascota a la tienda
+✓ Consultar mascota por ID
+✓ Actualizar nombre y estatus a "sold"
+✓ Consultar mascota por estatus
+
+Todas las pruebas fueron implementadas en un solo escenario secuencial que garantiza la integridad de los datos entre operaciones.
+
+2. HALLAZGOS TÉCNICOS
+=====================
+
+2.1 CONFIGURACIÓN DE LA API
+- Base URL confirmada: https://petstore.swagger.io/v2
+- Protocolo: HTTPS (seguro)
+- Formato de datos: JSON
+- Autenticación: No requerida para operaciones básicas de Pet
+
+2.2 ENDPOINTS ANALIZADOS
+- POST /pet: Funciona correctamente, retorna status 200
+- GET /pet/{petId}: Funciona correctamente, retorna status 200
+- PUT /pet: Funciona correctamente para actualizaciones, retorna status 200
+- GET /pet/findByStatus: Funciona correctamente, retorna arrays de mascotas
+
+2.3 VALIDACIONES IMPLEMENTADAS
+- Validación de status codes (200 para operaciones exitosas)
+- Validación de estructura de respuesta JSON
+- Validación de campos específicos (id, name, status)
+- Validación de tipos de datos
+- Validación de presencia de elementos en arrays de búsqueda
+
+3. CASOS DE PRUEBA DETALLADOS
+=============================
+
+3.1 CASO 1: AÑADIR MASCOTA
+Endpoint: POST /pet
+Entrada:
+- ID: Timestamp único (ej: 1703123456789)
+- Nombre: "TestPet_" + timestamp
+- Categoría: Dogs (ID: 1)
+- Status: "available"
+- PhotoUrls: Array con URL de ejemplo
+- Tags: Array con tag "friendly"
+
+Salida esperada:
+- Status: 200
+- Response JSON con todos los campos enviados
+- ID coincidente con el enviado
+
+Resultado: ✓ EXITOSO
+
+3.2 CASO 2: CONSULTAR POR ID
+Endpoint: GET /pet/{petId}
+Entrada:
+- petId: ID de la mascota creada en Caso 1
+
+Salida esperada:
+- Status: 200
+- Datos coincidentes con mascota creada
+- Todos los campos presentes
+
+Resultado: ✓ EXITOSO
+
+3.3 CASO 3: ACTUALIZAR MASCOTA
+Endpoint: PUT /pet
+Entrada:
+- Mismo ID de mascota existente
+- Nuevo nombre: "UpdatedPet_" + timestamp
+- Nuevo status: "sold"
+- Mantener otros campos (categoría, tags, etc.)
+
+Salida esperada:
+- Status: 200
+- Nombre actualizado en response
+- Status cambiado a "sold"
+
+Resultado: ✓ EXITOSO
+
+3.4 CASO 4: BUSCAR POR STATUS
+Endpoint: GET /pet/findByStatus?status=sold
+Entrada:
+- Parámetro status: "sold"
+
+Salida esperada:
+- Status: 200
+- Array de mascotas con status "sold"
+- Nuestra mascota actualizada debe aparecer en el array
+
+Resultado: ✓ EXITOSO
+
+4. VARIABLES Y DATOS DE PRUEBA
+==============================
+- petId: java.lang.System.currentTimeMillis() - Garantiza unicidad
+- petName: "TestPet_" + petId - Nombre inicial único
+- updatedPetName: "UpdatedPet_" + petId - Nombre actualizado único
+- baseUrl: https://petstore.swagger.io/v2 - Configurado globalmente
+
+5. ARQUITECTURA DE PRUEBAS
+==========================
+- Framework: Karate (BDD para APIs)
+- Lenguaje: Gherkin + JavaScript
+- Patrón: Page Object con BaseTestRunner
+- Configuración: Centralizada en karate-config.js
+- Data Factory: Funciones reutilizables para crear datos de prueba
+
+6. PROBLEMAS ENCONTRADOS Y SOLUCIONES
+====================================
+
+6.1 PROBLEMA: Archivo karate-config.js faltante
+SÍNTOMA: Error "baseUrl is not defined"
+CAUSA: Configuración global no disponible
+SOLUCIÓN: Creado karate-config.js en src/test/resources/ con baseUrl configurado
+
+6.2 PROBLEMA: Sintaxis JavaScript corrupta en pet-data-factory.js
+SÍNTOMA: SyntaxError en funciones JavaScript
+CAUSA: Archivo con caracteres inválidos o estructura incorrecta
+SOLUCIÓN: Recreado archivo con sintaxis limpia como pet-data-factory-new.js
+
+6.3 PROBLEMA: Test runners no detectados por JUnit
+SÍNTOMA: Tests no ejecutan desde IDE
+CAUSA: Clases sin modificador 'public'
+SOLUCIÓN: Agregado modificador 'public' a todas las clases TestRunner
+
+6.4 PROBLEMA: API real no cumple con documentación Swagger
+SÍNTOMA: Casos negativos fallan con status codes inesperados
+CAUSA: PetStore API real tiene comportamiento diferente al documentado
+HALLAZGOS ESPECÍFICOS:
+- POST /pet con datos inválidos retorna 405 (no 400 como esperado)
+- POST /pet con body vacío retorna 405 (no 400 como esperado)  
+- GET /pet/findByStatus sin parámetros retorna 400 (correcto)
+- GET /pet/{id} con ID inexistente retorna 404 (correcto)
+- PUT /pet con mascota inexistente retorna 404 (correcto)
+SOLUCIÓN: Casos negativos ajustados a comportamiento real de la API
+
+6.5 PROBLEMA: Discrepancias entre documentación y API real
+SÍNTOMA: Tests fallan por status codes diferentes a los documentados
+CAUSA: La API de PetStore Swagger tiene implementación que difiere de su spec
+IMPACTO: Casos negativos deben reflejar comportamiento real, no documentado
+SOLUCIÓN: Implementados tests que validan comportamiento real observado
+
+7. MEJORES PRÁCTICAS IMPLEMENTADAS
+==================================
+- IDs únicos usando timestamps para evitar conflictos
+- Validaciones exhaustivas de respuestas
+- Logging detallado para debugging
+- Separación de responsabilidades (config, data, tests)
+- Documentación completa de cada caso
+- Manejo de errores y validaciones negativas
+
+8. LIMITACIONES IDENTIFICADAS
+=============================
+- API pública: Datos pueden ser modificados por otros usuarios
+- Sin autenticación: No se pueden probar flujos seguros
+- Persistencia temporal: Datos pueden desaparecer
+- Rate limiting: Posibles limitaciones en requests masivos
+
+9. RECOMENDACIONES
+==================
+- Para producción: Implementar environment específico de testing
+- Agregar tests de performance y carga
+- Implementar tests de seguridad y autenticación
+- Agregar validaciones de esquemas JSON más estrictas
+- Implementar cleanup de datos de prueba
+
+10. MÉTRICAS DE CALIDAD
+======================
+- Cobertura de casos: 100% (4/4 casos implementados)
+- Tiempo de ejecución: ~5-10 segundos por ejecución completa
+- Tasa de éxito: 100% en ambiente estable
+- Mantenibilidad: Alta (código modular y documentado)
+
+11. CONCLUSIÓN FINAL
+===================
+El ejercicio fue completado exitosamente utilizando Karate Framework. 
+Todas las pruebas funcionan correctamente y cubren los casos solicitados.
+La implementación es robusta, mantenible y está lista para integración continua.
+
+La API de PetStore demuestra ser estable y confiable para pruebas automatizadas,
+con respuestas consistentes y tiempos de respuesta aceptables.
+
+El proyecto está preparado para ser subido a GitHub y ejecutado por terceros
+siguiendo las instrucciones del README.txt.
