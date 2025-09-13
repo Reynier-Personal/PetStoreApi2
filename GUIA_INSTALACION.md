@@ -33,20 +33,7 @@ cd PetStoreApi2
 
 ## ▶EJECUCIÓN DE TESTS
 
-### Método 1: Scripts Automatizados (RECOMENDADO)
-
-**Windows:**
-```cmd
-run-tests.bat
-```
-
-**Linux/Mac:**
-```bash
-chmod +x run-tests.sh
-./run-tests.sh
-```
-
-### Método 2: Comandos Maven Directos
+### Comandos Maven Directos
 
 **CRUD Completo:**
 ```bash
